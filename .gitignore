@@ -1,0 +1,32 @@
+# Secrets and local environment
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+id_rsa*
+id_ed25519*
+
+# Dumps and backups
+*.sql
+*.sql.gz
+*.dump
+*.bak
+*.backup
+
+# Logs and runtime output
+*.log
+logs/
+tmp/
+
+# Editors
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
