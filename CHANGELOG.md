@@ -7,3 +7,4 @@
 - Document standard CIBER container host layout.
 - Document networking, security, and operations guidance.
 - Add example Apache vhost template for PathoCore/MEPRAM services.
+- Add host tooling inventory and PR template for tooling changes.

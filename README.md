@@ -112,6 +112,18 @@ The Debian bootstrap:
 The script is idempotent and backs up existing Docker/containerd config files
 before overwriting them.
 
+## Installed Tools
+
+The authoritative list of host-level tools installed by the bootstrap scripts is
+maintained in:
+
+```text
+docs/tooling-inventory.md
+```
+
+Any pull request that adds, removes, or changes installed tools must update that
+document or include an equivalent tools table in the PR description.
+
 ## Standard Directory Layout
 
 ```text
@@ -159,6 +171,13 @@ See `docs/networking.md`.
 - Use SSH tunnels for temporary debugging when DNS/HTTPS is not ready.
 
 See `docs/security.md`.
+
+## Contributing
+
+Pull requests use `.github/pull_request_template.md`. Contributors must declare
+whether host-level tools changed. If a script installs a new package or enables a
+new host service, the PR must include a table with the tool name, source, reason,
+and operational impact.
 
 ## Validation
 
