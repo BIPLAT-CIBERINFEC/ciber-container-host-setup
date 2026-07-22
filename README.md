@@ -139,6 +139,19 @@ document or include an equivalent tools table in the PR description.
 
 See `docs/host-layout.md` for details.
 
+## Backups
+
+Host-level backups are configured with:
+
+```text
+scripts/backup-container-host.sh
+scripts/install-backup-cron.sh
+templates/env/ciber-container-backup.example.env
+```
+
+The default policy is one backup every 24 hours during the night, with logs under
+`/var/log/local/container-backup`. See `docs/backups.md`.
+
 ## Network Model
 
 Temporary development access may expose service ports directly only when agreed

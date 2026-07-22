@@ -144,6 +144,7 @@ install_base_packages() {
     ca-certificates curl gnupg lsb-release \
     git wget jq unzip rsync vim htop tree \
     net-tools \
+    cron \
     apache2
 }
 
@@ -258,9 +259,10 @@ configure_apache() {
 
 restart_services() {
   run systemctl daemon-reload
-  run systemctl enable containerd docker apache2
+  run systemctl enable containerd docker cron apache2
   run systemctl restart containerd
   run systemctl restart docker
+  run systemctl restart cron
   run systemctl restart apache2
 }
 

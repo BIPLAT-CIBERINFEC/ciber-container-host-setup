@@ -53,3 +53,29 @@ docker volume ls
 
 Avoid destructive cleanup commands on shared production hosts unless there is a
 specific maintenance window.
+
+## Backup Checks
+
+Run a manual dry-run:
+
+```bash
+sudo bash scripts/backup-container-host.sh \
+  --config /etc/ciber-container-backup.env \
+  --dry-run
+```
+
+Run a real backup without waiting for the nightly cron:
+
+```bash
+sudo bash scripts/backup-container-host.sh \
+  --config /etc/ciber-container-backup.env
+```
+
+Check backup logs and files:
+
+```bash
+sudo tail -n 100 /var/log/local/container-backup/container-backup-$(date +%Y%m%d).log
+sudo find /srv/containers/backup/host -maxdepth 3 -type f | sort
+```
+
+See `docs/backups.md` for configuration and restore notes.
