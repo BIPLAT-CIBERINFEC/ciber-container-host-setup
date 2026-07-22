@@ -27,6 +27,7 @@ scripts/bootstrap-debian-container-host.sh
 | `vim` | OS package repository | Terminal editing | Yes | Operational convenience |
 | `htop` | OS package repository | Interactive process/resource inspection | Yes | Operational convenience |
 | `tree` | OS package repository | Directory layout inspection | Yes | Useful for validating host structure |
+| `net-tools` | OS package repository | Legacy network commands such as `ifconfig` | Yes | Kept for operator convenience; prefer `ip` commands for new documentation |
 | `apache2` | OS package repository | Reverse proxy for public HTTP/HTTPS access | Yes | Production entrypoint before application containers |
 | `docker-ce` | Official Docker repository | Docker Engine daemon | Yes | Docker data root is configured under `/srv/containers/storage` |
 | `docker-ce-cli` | Official Docker repository | Docker CLI | Yes | Required for local Docker operations |

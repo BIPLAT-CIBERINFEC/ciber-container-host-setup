@@ -143,6 +143,7 @@ install_base_packages() {
   run apt-get install -y \
     ca-certificates curl gnupg lsb-release \
     git wget jq unzip rsync vim htop tree \
+    net-tools \
     apache2
 }
 
