@@ -20,6 +20,9 @@ snapshots are still useful for bind-mounted files, uploaded documents, static
 state, and secondary inspection, but live database volumes should not be the only
 database recovery mechanism.
 
+MySQL dumps use `--no-tablespaces` so application database users do not need the
+global `PROCESS` privilege.
+
 ## Configuration
 
 Create a host-local config from the template:

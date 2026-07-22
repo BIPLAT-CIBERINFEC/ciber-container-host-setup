@@ -214,11 +214,11 @@ backup_databases() {
     output="$db_dir/${name}.sql.gz"
     log "Dumping database '$database' from container '$container' as '$name'"
     if [ "$DRY_RUN" = true ]; then
-      printf "[dry-run] docker exec -e MYSQL_PWD=*** %s mysqldump -u%s %s | gzip > %s\n" \
+      printf "[dry-run] docker exec -e MYSQL_PWD=*** %s mysqldump --single-transaction --quick --routines --triggers --no-tablespaces -u%s %s | gzip > %s\n" \
         "$container" "$user" "$database" "$output"
     else
       docker exec -e MYSQL_PWD="$password" "$container" \
-        mysqldump --single-transaction --quick --routines --triggers \
+        mysqldump --single-transaction --quick --routines --triggers --no-tablespaces \
         -u"$user" "$database" | gzip -c > "$output"
     fi
   done <<< "$CIBER_BACKUP_DATABASES"
