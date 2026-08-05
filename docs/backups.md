@@ -48,11 +48,15 @@ Important settings:
 | `BACKUP_ROOT` | Backup destination root | `/srv/containers/backup/host` |
 | `LOG_DIR` | Backup log directory | `/var/log/local/container-backup` |
 | `CONTAINER_BIND_ROOT` | Bind mount root to snapshot | `/srv/containers/bind` |
-| `RETENTION_DAYS` | Retention for snapshots, database dumps, and logs | `14` |
+| `BACKUP_RETENTION_DAYS` | Retention for snapshots and database dumps | `14` |
+| `LOG_RETENTION_DAYS` | Retention for backup execution logs | `90` |
 | `BACKUP_BIND_MOUNTS` | Enable bind mount backups | `true` |
 | `BACKUP_DOCKER_VOLUMES` | Enable Docker volume backups | `true` |
 | `BACKUP_DOCKER_IMAGES` | Enable Docker image backups | `true` |
 | `BACKUP_DATABASES` | Enable SQL dumps | `true` |
+
+Legacy configs that still define `RETENTION_DAYS` continue to work. New configs
+should use `BACKUP_RETENTION_DAYS` and `LOG_RETENTION_DAYS`.
 
 ## Required Values To Review
 
@@ -64,7 +68,8 @@ Before enabling backups on a VM, review these values in
 | `BACKUP_ROOT` | Main destination for generated backups. Confirm this path has enough disk space. |
 | `LOG_DIR` | Directory where backup execution logs are written. |
 | `CONTAINER_BIND_ROOT` | Root folder for bind mounts that should be snapshotted. |
-| `RETENTION_DAYS` | Number of days to keep snapshots, SQL dumps, and logs. |
+| `BACKUP_RETENTION_DAYS` | Number of days to keep snapshots and SQL dumps. |
+| `LOG_RETENTION_DAYS` | Number of days to keep backup execution logs. |
 | `PATHOCORE_DB_PASSWORD` | Password used to dump the PathoCore API database. |
 | `KEYCLOAK_DB_PASSWORD` | Password used to dump the Keycloak database. |
 | `MEPRAM_OMOP_DB_PASSWORD` | Password used to dump the MePRAM OMOP API database. |
@@ -156,9 +161,9 @@ sudo cat /etc/cron.d/ciber-container-backup
 
 | Artifact | Retention |
 |---|---|
-| Snapshots | `RETENTION_DAYS` |
-| SQL dumps | `RETENTION_DAYS` |
-| Logs | `RETENTION_DAYS` |
+| Snapshots | `BACKUP_RETENTION_DAYS` |
+| SQL dumps | `BACKUP_RETENTION_DAYS` |
+| Logs | `LOG_RETENTION_DAYS` |
 | Docker image archives | Not automatically pruned |
 
 Docker image archives are saved by image ID and skipped if already present. They

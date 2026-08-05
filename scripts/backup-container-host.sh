@@ -52,7 +52,8 @@ fi
 BACKUP_ROOT="${BACKUP_ROOT:-/srv/containers/backup/host}"
 LOG_DIR="${LOG_DIR:-/var/log/local/container-backup}"
 CONTAINER_BIND_ROOT="${CONTAINER_BIND_ROOT:-/srv/containers/bind}"
-RETENTION_DAYS="${RETENTION_DAYS:-14}"
+BACKUP_RETENTION_DAYS="${BACKUP_RETENTION_DAYS:-${RETENTION_DAYS:-14}}"
+LOG_RETENTION_DAYS="${LOG_RETENTION_DAYS:-30}"
 BACKUP_BIND_MOUNTS="${BACKUP_BIND_MOUNTS:-true}"
 BACKUP_DOCKER_VOLUMES="${BACKUP_DOCKER_VOLUMES:-true}"
 BACKUP_DOCKER_IMAGES="${BACKUP_DOCKER_IMAGES:-true}"
@@ -237,10 +238,11 @@ rotate_latest_snapshot() {
 }
 
 apply_retention() {
-  log "Applying retention policy: $RETENTION_DAYS days"
-  run find "$BACKUP_ROOT/snapshots" -mindepth 1 -maxdepth 1 -type d -mtime +"$RETENTION_DAYS" -exec rm -rf {} +
-  run find "$BACKUP_ROOT/databases" -mindepth 1 -maxdepth 1 -type d -mtime +"$RETENTION_DAYS" -exec rm -rf {} +
-  run find "$LOG_DIR" -type f -name 'container-backup-*.log' -mtime +"$RETENTION_DAYS" -delete
+  log "Applying backup retention policy: $BACKUP_RETENTION_DAYS days"
+  run find "$BACKUP_ROOT/snapshots" -mindepth 1 -maxdepth 1 -type d -mtime +"$BACKUP_RETENTION_DAYS" -exec rm -rf {} +
+  run find "$BACKUP_ROOT/databases" -mindepth 1 -maxdepth 1 -type d -mtime +"$BACKUP_RETENTION_DAYS" -exec rm -rf {} +
+  log "Applying log retention policy: $LOG_RETENTION_DAYS days"
+  run find "$LOG_DIR" -type f -name 'container-backup-*.log' -mtime +"$LOG_RETENTION_DAYS" -delete
 }
 
 main() {
