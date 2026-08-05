@@ -144,8 +144,7 @@ install_base_packages() {
     ca-certificates curl gnupg lsb-release \
     git wget jq unzip rsync vim htop tree \
     net-tools \
-    cron \
-    apache2
+    cron
 }
 
 install_docker() {
@@ -249,21 +248,12 @@ configure_user() {
   fi
 }
 
-configure_apache() {
-  if command -v a2enmod >/dev/null 2>&1; then
-    run a2enmod proxy proxy_http headers rewrite ssl
-  else
-    printf "WARNING: a2enmod not found; skipping Apache module enablement.\n" >&2
-  fi
-}
-
 restart_services() {
   run systemctl daemon-reload
-  run systemctl enable containerd docker cron apache2
+  run systemctl enable containerd docker cron
   run systemctl restart containerd
   run systemctl restart docker
   run systemctl restart cron
-  run systemctl restart apache2
 }
 
 validate() {
@@ -271,7 +261,6 @@ validate() {
   printf "  docker --version\n"
   printf "  docker compose version\n"
   printf "  docker info | grep -E 'Docker Root Dir|Storage Driver'\n"
-  printf "  apache2ctl -M | grep -E 'proxy|headers|rewrite|ssl'\n"
 }
 
 main() {
@@ -283,7 +272,6 @@ main() {
   configure_docker
   configure_containerd
   configure_user
-  configure_apache
   restart_services
   validate
 

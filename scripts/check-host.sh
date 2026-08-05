@@ -28,7 +28,6 @@ run_optional "cpu" lscpu
 section "Network"
 run_optional "addresses" ip a
 run_optional "routes" ip route
-run_optional "listening tcp ports" ss -ltnp
 
 section "DNS and Internet"
 run_optional "resolve github.com" getent hosts github.com
@@ -46,20 +45,9 @@ if command -v docker >/dev/null 2>&1; then
   docker --version || true
   docker compose version || true
   docker info 2>/dev/null | grep -E "Docker Root Dir|Storage Driver|Cgroup Driver|Logging Driver" || true
-  docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" || true
+  docker ps --format "table {{.Names}}\t{{.Status}}" || true
 else
   printf "docker is not installed or not in PATH\n"
-fi
-
-section "Apache"
-if command -v apache2ctl >/dev/null 2>&1; then
-  apache2ctl -v || true
-  apache2ctl -M 2>/dev/null | grep -E "proxy|headers|rewrite|ssl" || true
-elif command -v httpd >/dev/null 2>&1; then
-  httpd -v || true
-  httpd -M 2>/dev/null | grep -E "proxy|headers|rewrite|ssl" || true
-else
-  printf "apache/httpd is not installed or not in PATH\n"
 fi
 
 section "Expected CIBER Directories"

@@ -1,29 +1,30 @@
 # CIBER Container Host Setup
 
-Bootstrap and operating notes for CIBER/ISCIII virtual machines used to host
-Docker-based web/API applications.
+Bootstrap and operating scripts for CIBER/ISCIII virtual machines that host
+Docker-based applications.
 
-This repository is intentionally infrastructure-oriented and does not contain
-project secrets, database dumps, TLS certificates, SSH keys, tokens, or
-application-specific production environment files.
+This repository prepares the VM host only. Application deployment, reverse proxy
+configuration, secrets, DNS, TLS, and application-specific Docker Compose files
+belong to each application/orchestrator repository.
+
+Do not commit secrets, database dumps, certificates, SSH keys, tokens, or real
+environment files.
 
 ## Scope
 
-The scripts and documentation prepare a minimal Linux VM for deployments such as:
+The host setup covers:
 
-- `pathocore-web`
-- `pathocore-api`
-- `mepram-omop-api`
+- base administration packages
+- Docker Engine and Docker Compose plugin
+- Docker data-root under `/srv/containers/storage`
+- containerd root under `/srv/containers/containerd`
+- standard CIBER folders under `/opt`, `/srv`, and `/var/log/local`
+- host-level backup scripts and optional cron scheduling
 
-The expected deployment model is:
+The setup does not publish application services. Network exposure should be
+handled by the relevant application deployment.
 
-- application repositories under `/opt/container_apps/<app_name>`
-- Docker/container data under `/srv/containers`
-- application and Apache logs under `/var/log/local/<app_name>`
-- only Apache/reverse-proxy exposed publicly in production
-- application containers bound to loopback in production
-
-## Supported hosts
+## Target Hosts
 
 Primary target:
 
@@ -44,36 +45,23 @@ Expected resources for PathoCore/MEPRAM-like deployments:
 
 RHEL-like systems are not automated yet. See `docs/rhel-notes.md`.
 
-## Repository Name
+## Repository
 
-Recommended upstream name:
-
-```text
-ciber-container-host-setup
-```
-
-Suggested upstream:
+Recommended upstream:
 
 ```text
 https://github.com/BIPLAT-CIBERINFEC/ciber-container-host-setup
 ```
 
-Suggested fork:
-
-```text
-git@github.com:Daniel-VM/ciber-container-host-setup.git
-```
-
 ## Quick Start
 
-Run the host audit first. It is read-only and does not require sudo for most
-checks:
+Run the read-only host audit:
 
 ```bash
 bash scripts/check-host.sh
 ```
 
-Preview the Debian bootstrap without applying changes:
+Preview the bootstrap:
 
 ```bash
 bash scripts/bootstrap-debian-container-host.sh --dry-run
@@ -86,7 +74,7 @@ sudo DEPLOY_USER=bioinfoadm \
   bash scripts/bootstrap-debian-container-host.sh --apply
 ```
 
-Optional app list:
+Create app-specific directories in the same run:
 
 ```bash
 sudo DEPLOY_USER=bioinfoadm \
@@ -94,35 +82,33 @@ sudo DEPLOY_USER=bioinfoadm \
   bash scripts/bootstrap-debian-container-host.sh --apply
 ```
 
-## What the Bootstrap Does
+## Main Scripts
 
-The Debian bootstrap:
+| Script | Purpose | Makes changes? |
+|---|---|---|
+| `scripts/check-host.sh` | Read-only host audit | No |
+| `scripts/bootstrap-debian-container-host.sh` | Install host packages, Docker, storage config, folders, permissions | Only with `--apply` |
+| `scripts/backup-container-host.sh` | Run bind/volume/image/database backups | Yes, unless `--dry-run` |
+| `scripts/install-backup-cron.sh` | Install `/etc/cron.d/ciber-container-backup` | Only with `--apply` |
 
-- installs base administration packages
-- installs Apache
-- installs Docker from the official Docker repository
-- configures Docker storage under `/srv/containers/storage`
-- configures containerd storage under `/srv/containers/containerd`
-- creates the standard CIBER directory layout
-- creates per-application bind, backup, and log folders
-- adds the deployment user to the `docker` group
-- enables common Apache reverse-proxy modules
-- keeps production applications ready to bind internally to `127.0.0.1`
+## Setup Flow
 
-The script is idempotent and backs up existing Docker/containerd config files
-before overwriting them.
-
-## Installed Tools
-
-The authoritative list of host-level tools installed by the bootstrap scripts is
-maintained in:
-
-```text
-docs/tooling-inventory.md
+```mermaid
+flowchart TD
+    A[Fresh CIBER VM] --> B[Run check-host.sh]
+    B --> C{Looks OK?}
+    C -- no --> D[Fix OS, disk, sudo, internet, or SSH access]
+    D --> B
+    C -- yes --> E[Run bootstrap --dry-run]
+    E --> F[Run bootstrap --apply]
+    F --> G[Clone application repositories under /opt/container_apps]
+    G --> H[Create application env files under /srv/containers/bind]
+    H --> I[Deploy applications from their own repos]
+    I --> J[Configure backup env in /etc/ciber-container-backup.env]
+    J --> K[Run backup dry-run]
+    K --> L[Run one manual backup]
+    L --> M[Install nightly backup cron]
 ```
-
-Any pull request that adds, removes, or changes installed tools must update that
-document or include an equivalent tools table in the PR description.
 
 ## Standard Directory Layout
 
@@ -149,48 +135,24 @@ scripts/install-backup-cron.sh
 templates/env/ciber-container-backup.example.env
 ```
 
-The default policy is one backup every 24 hours during the night, with logs under
-`/var/log/local/container-backup`. See `docs/backups.md`.
-
-## Network Model
-
-Temporary development access may expose service ports directly only when agreed
-with systems/UTIC.
-
-Production should expose only:
+The default schedule is daily at 02:15, with logs under:
 
 ```text
-80/tcp
-443/tcp
+/var/log/local/container-backup
 ```
 
-Application ports such as `3000`, `8000`, `8080`, and `8100` should remain
-internal and be reached through Apache virtual hosts.
+See `docs/backups.md`.
 
-An example vhost file is available at:
+## Installed Tools
+
+The authoritative list of host-level tools installed by the bootstrap script is:
 
 ```text
-templates/apache/pathocore-mepram-vhosts.example.conf
+docs/tooling-inventory.md
 ```
 
-See `docs/networking.md`.
-
-## Security Notes
-
-- Do not commit `.env`, database dumps, private keys, TLS certificates, or tokens.
-- Do not print full tokens in logs or documentation.
-- Keep Docker and application services bound to `127.0.0.1` in production.
-- Use DNS + HTTPS + Apache reverse proxy for production exposure.
-- Use SSH tunnels for temporary debugging when DNS/HTTPS is not ready.
-
-See `docs/security.md`.
-
-## Contributing
-
-Pull requests use `.github/pull_request_template.md`. Contributors must declare
-whether host-level tools changed. If a script installs a new package or enables a
-new host service, the PR must include a table with the tool name, source, reason,
-and operational impact.
+Any pull request that adds, removes, or changes installed tools must update that
+document or include an equivalent tools table in the PR description.
 
 ## Validation
 
@@ -202,7 +164,7 @@ docker compose version
 docker info | grep -E "Docker Root Dir|Storage Driver"
 systemctl status docker --no-pager
 systemctl status containerd --no-pager
-apache2ctl -M | grep -E "proxy|headers|rewrite|ssl"
+systemctl status cron --no-pager
 ```
 
 Then run:
@@ -210,9 +172,3 @@ Then run:
 ```bash
 bash scripts/check-host.sh
 ```
-
-## Repository Status
-
-This repository prepares the VM host only. It does not install application
-repositories or configure application secrets. Those steps belong to each
-application repository or to the production orchestrator repository.

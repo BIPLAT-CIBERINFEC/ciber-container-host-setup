@@ -8,7 +8,6 @@ validated with systems/UTIC.
 Expected differences:
 
 - package manager: `dnf`
-- Apache package/service naming may differ
 - SELinux may require explicit policies or labels for bind mounts
 - Docker installation may need institutional repositories or Podman-based
   deployment decisions

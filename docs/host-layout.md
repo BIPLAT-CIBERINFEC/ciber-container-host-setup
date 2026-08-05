@@ -27,7 +27,8 @@ Examples:
 ```
 
 Use `apps` for application/container logs mounted into services when needed.
-Use `apache` for per-vhost Apache access/error logs.
+Use `apache` for reverse-proxy access/error logs when an application deployment
+mounts them.
 
 Examples:
 

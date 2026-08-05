@@ -9,9 +9,9 @@
 - [ ] Documentation only
 - [ ] Host bootstrap script
 - [ ] Host audit/check script
-- [ ] Apache/reverse-proxy template
 - [ ] Directory layout or permissions
 - [ ] Docker/containerd configuration
+- [ ] Backup/cron configuration
 - [ ] Other:
 
 ## Tooling Changes
@@ -27,7 +27,7 @@ No host-level tools added, removed, or changed.
 
 | Change | Tool / Package | Source | Reason | Operational impact |
 |---|---|---|---|---|
-| Add / Remove / Change | `package-name` | OS / Docker / External | Why this is needed | Ports, services, storage, security, or maintenance impact |
+| Add / Remove / Change | `package-name` | OS / Docker / External | Why this is needed | Services, storage, security, or maintenance impact |
 
 ## Validation
 
@@ -42,5 +42,4 @@ No host-level tools added, removed, or changed.
 - [ ] No `.env` files with real values committed
 - [ ] No passwords, tokens, private keys, certificates, or database dumps committed
 - [ ] No full tokens printed in docs or examples
-- [ ] New services/ports are documented, if applicable
-- [ ] Production exposure remains designed around Apache `80/443`, unless explicitly justified
+- [ ] New host services are documented, if applicable

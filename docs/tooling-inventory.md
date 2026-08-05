@@ -29,28 +29,11 @@ scripts/bootstrap-debian-container-host.sh
 | `tree` | OS package repository | Directory layout inspection | Yes | Useful for validating host structure |
 | `net-tools` | OS package repository | Legacy network commands such as `ifconfig` | Yes | Kept for operator convenience; prefer `ip` commands for new documentation |
 | `cron` | OS package repository | Scheduled host jobs such as nightly backup execution | Yes | Required for `/etc/cron.d/ciber-container-backup` |
-| `apache2` | OS package repository | Reverse proxy for public HTTP/HTTPS access | Yes | Production entrypoint before application containers |
 | `docker-ce` | Official Docker repository | Docker Engine daemon | Yes | Docker data root is configured under `/srv/containers/storage` |
 | `docker-ce-cli` | Official Docker repository | Docker CLI | Yes | Required for local Docker operations |
 | `containerd.io` | Official Docker repository | Container runtime | Yes | Root configured under `/srv/containers/containerd` |
 | `docker-buildx-plugin` | Official Docker repository | Docker Buildx support | Yes | Required for modern image builds |
 | `docker-compose-plugin` | Official Docker repository | `docker compose` subcommand | Yes | Required for Compose-based deployments |
-
-## Apache Modules
-
-Enabled by:
-
-```text
-scripts/bootstrap-debian-container-host.sh
-```
-
-| Module | Purpose | Enabled by default | Notes |
-|---|---|---|---|
-| `proxy` | Core Apache reverse-proxy support | Yes | Required for all proxied services |
-| `proxy_http` | HTTP reverse-proxy backend support | Yes | Required for Docker services on local HTTP ports |
-| `headers` | Forwarded headers and proxy metadata | Yes | Required for `X-Forwarded-*` handling |
-| `rewrite` | URL rewriting support | Yes | Useful for future routing rules |
-| `ssl` | HTTPS/TLS virtual hosts | Yes | Required once certificates are available |
 
 ## Contribution Rule
 
@@ -59,7 +42,7 @@ the inventory update is not enough by itself:
 
 | Change | Tool / Package | Source | Reason | Operational impact |
 |---|---|---|---|---|
-| Add / Remove / Change | `package-name` | OS / Docker / External | Why this is needed | Ports, services, storage, security, or maintenance impact |
+| Add / Remove / Change | `package-name` | OS / Docker / External | Why this is needed | Services, storage, security, or maintenance impact |
 
 If no tooling changes are introduced, explicitly write:
 

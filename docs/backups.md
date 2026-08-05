@@ -1,31 +1,36 @@
 # Backups
 
-This repository provides a host-level backup policy for CIBER container VMs.
+This repository includes a local backup script for CIBER container VMs.
 
-The backup script is intentionally local and conservative. It does not require
-external backup infrastructure and does not commit secrets.
+The script is intentionally simple: it writes backups to the same host under
+`/srv/containers/backup/host`. If long-term retention is required, that folder
+should be copied to external storage by the agreed institutional backup policy.
 
-## Scope
+## What Is Backed Up
 
-The backup job covers:
+| Element | Content | Method / Format | Destination |
+|---|---|---|---|
+| Bind mounts | `/srv/containers/bind` | Incremental snapshot with `rsync --link-dest` | `/srv/containers/backup/host/snapshots/<timestamp>/bind/` |
+| Docker volumes | Docker named volume mountpoints | Incremental snapshot with `rsync --link-dest` | `/srv/containers/backup/host/snapshots/<timestamp>/volumes/` |
+| Docker images | Local Docker images | `docker save` compressed as `.tar.gz`, one file per image ID | `/srv/containers/backup/host/images/<image_id>.tar.gz` |
+| MySQL/MariaDB databases | Configured databases | `mysqldump` compressed as `.sql.gz` | `/srv/containers/backup/host/databases/<timestamp>/<backup_name>.sql.gz` |
+| Backup logs | Script execution output | Daily log file | `/var/log/local/container-backup/container-backup-YYYYMMDD.log` |
 
-- bind mounts under `/srv/containers/bind`
-- Docker named volumes using their local mountpoints
-- Docker images, saved once per immutable image ID
-- configured MySQL/MariaDB databases using logical dumps
-- execution logs under `/var/log/local/container-backup`
+Database dumps are the primary recovery artifact for MySQL/MariaDB data. Volume
+snapshots are useful for files, bind-mounted state, and inspection, but live
+database volumes should not be the only database recovery source.
 
-Database dumps are the primary restore source for MySQL/MariaDB data. Volume
-snapshots are still useful for bind-mounted files, uploaded documents, static
-state, and secondary inspection, but live database volumes should not be the only
-database recovery mechanism.
+MySQL dumps use:
 
-MySQL dumps use `--no-tablespaces` so application database users do not need the
-global `PROCESS` privilege.
+```text
+--single-transaction --quick --routines --triggers --no-tablespaces
+```
+
+`--no-tablespaces` avoids requiring the global MySQL `PROCESS` privilege.
 
 ## Configuration
 
-Create a host-local config from the template:
+Create the local configuration file:
 
 ```bash
 sudo cp templates/env/ciber-container-backup.example.env /etc/ciber-container-backup.env
@@ -33,7 +38,21 @@ sudo chmod 0600 /etc/ciber-container-backup.env
 sudo vim /etc/ciber-container-backup.env
 ```
 
-Do not commit the edited config file. It may contain database passwords.
+Do not commit `/etc/ciber-container-backup.env`; it may contain database
+passwords.
+
+Important settings:
+
+| Setting | Purpose | Default |
+|---|---|---|
+| `BACKUP_ROOT` | Backup destination root | `/srv/containers/backup/host` |
+| `LOG_DIR` | Backup log directory | `/var/log/local/container-backup` |
+| `CONTAINER_BIND_ROOT` | Bind mount root to snapshot | `/srv/containers/bind` |
+| `RETENTION_DAYS` | Retention for snapshots, database dumps, and logs | `14` |
+| `BACKUP_BIND_MOUNTS` | Enable bind mount backups | `true` |
+| `BACKUP_DOCKER_VOLUMES` | Enable Docker volume backups | `true` |
+| `BACKUP_DOCKER_IMAGES` | Enable Docker image backups | `true` |
+| `BACKUP_DATABASES` | Enable SQL dumps | `true` |
 
 Each database entry uses this format:
 
@@ -47,9 +66,9 @@ Example:
 pathocore_api|pathocore-pathocore_db-1|pathocore_api|pathocore|PATHOCORE_DB_PASSWORD
 ```
 
-## Manual Test
+## Run Manually
 
-Run a dry-run first:
+Dry run:
 
 ```bash
 sudo bash scripts/backup-container-host.sh \
@@ -57,30 +76,35 @@ sudo bash scripts/backup-container-host.sh \
   --dry-run
 ```
 
-Then run a real backup without waiting for cron:
+Real backup:
 
 ```bash
 sudo bash scripts/backup-container-host.sh \
   --config /etc/ciber-container-backup.env
 ```
 
-Check generated output:
+Check output:
 
 ```bash
 sudo find /srv/containers/backup/host -maxdepth 3 -type f | sort
 sudo tail -n 100 /var/log/local/container-backup/container-backup-$(date +%Y%m%d).log
 ```
 
-## Daily Cron
+## Cron
 
-Default schedule is daily at 02:15:
+Install the default nightly cron:
 
 ```bash
 sudo REPO_PATH=/opt/container_apps/ciber-container-host-setup \
   bash scripts/install-backup-cron.sh --apply
 ```
 
-Use a faster schedule only for testing:
+| Mode | Schedule | Cron expression |
+|---|---|---|
+| Default | Daily at 02:15 | `15 2 * * *` |
+| Temporary test | Every 10 minutes | `*/10 * * * *` |
+
+Temporary test schedule:
 
 ```bash
 sudo REPO_PATH=/opt/container_apps/ciber-container-host-setup \
@@ -88,7 +112,7 @@ sudo REPO_PATH=/opt/container_apps/ciber-container-host-setup \
   bash scripts/install-backup-cron.sh --apply
 ```
 
-Return to the nightly schedule after testing:
+Return to the default schedule:
 
 ```bash
 sudo REPO_PATH=/opt/container_apps/ciber-container-host-setup \
@@ -96,7 +120,7 @@ sudo REPO_PATH=/opt/container_apps/ciber-container-host-setup \
   bash scripts/install-backup-cron.sh --apply
 ```
 
-Inspect the installed cron file:
+Inspect the installed cron:
 
 ```bash
 sudo cat /etc/cron.d/ciber-container-backup
@@ -104,18 +128,15 @@ sudo cat /etc/cron.d/ciber-container-backup
 
 ## Retention
 
-Retention is controlled by:
+| Artifact | Retention |
+|---|---|
+| Snapshots | `RETENTION_DAYS` |
+| SQL dumps | `RETENTION_DAYS` |
+| Logs | `RETENTION_DAYS` |
+| Docker image archives | Not automatically pruned |
 
-```text
-RETENTION_DAYS=14
-```
-
-The script removes old snapshot directories, database dump directories, and
-backup logs older than this threshold.
-
-Docker image archives are stored by immutable image ID and skipped once they
-already exist. They are not aggressively removed by default because old image
-IDs can be useful for rollback. Review image archive size periodically:
+Docker image archives are saved by image ID and skipped if already present. They
+can grow over time, so review disk usage periodically:
 
 ```bash
 sudo du -hxd1 /srv/containers/backup/host/images | sort -h
@@ -131,19 +152,10 @@ gzip -dc /srv/containers/backup/host/databases/<timestamp>/pathocore_api.sql.gz 
       mysql -upathocore -p pathocore_api
 ```
 
-Use the correct database user/password for the target environment. Avoid putting
-real passwords in shell history; prefer `MYSQL_PWD` or an interactive prompt.
-
 Docker image restore example:
 
 ```bash
 gzip -dc /srv/containers/backup/host/images/<image_id>.tar.gz | docker load
-```
-
-Bind mount and volume snapshots can be inspected under:
-
-```text
-/srv/containers/backup/host/snapshots/<timestamp>/
 ```
 
 Restores should be done during a maintenance window and after stopping affected
