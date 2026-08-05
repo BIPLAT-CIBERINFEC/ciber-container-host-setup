@@ -54,6 +54,22 @@ Important settings:
 | `BACKUP_DOCKER_IMAGES` | Enable Docker image backups | `true` |
 | `BACKUP_DATABASES` | Enable SQL dumps | `true` |
 
+## Required Values To Review
+
+Before enabling backups on a VM, review these values in
+`/etc/ciber-container-backup.env`:
+
+| Setting | Why it matters |
+|---|---|
+| `BACKUP_ROOT` | Main destination for generated backups. Confirm this path has enough disk space. |
+| `LOG_DIR` | Directory where backup execution logs are written. |
+| `CONTAINER_BIND_ROOT` | Root folder for bind mounts that should be snapshotted. |
+| `RETENTION_DAYS` | Number of days to keep snapshots, SQL dumps, and logs. |
+| `PATHOCORE_DB_PASSWORD` | Password used to dump the PathoCore API database. |
+| `KEYCLOAK_DB_PASSWORD` | Password used to dump the Keycloak database. |
+| `MEPRAM_OMOP_DB_PASSWORD` | Password used to dump the MePRAM OMOP API database. |
+| `CIBER_BACKUP_DATABASES` | List of databases to dump, including backup name, container, database, user, and password variable. |
+
 Each database entry uses this format:
 
 ```text
@@ -64,6 +80,16 @@ Example:
 
 ```text
 pathocore_api|pathocore-pathocore_db-1|pathocore_api|pathocore|PATHOCORE_DB_PASSWORD
+```
+
+Typical PathoCore/MEPRAM example:
+
+```text
+CIBER_BACKUP_DATABASES="
+pathocore_api|pathocore-pathocore_db-1|pathocore_api|pathocore|PATHOCORE_DB_PASSWORD
+keycloak|pathocore-keycloak_db-1|keycloak|keycloak|KEYCLOAK_DB_PASSWORD
+mepram_omop_api|pathocore-mepram_omop_db-1|mepram_omop_api|mepram|MEPRAM_OMOP_DB_PASSWORD
+"
 ```
 
 ## Run Manually

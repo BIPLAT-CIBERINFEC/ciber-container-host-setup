@@ -141,6 +141,10 @@ The default schedule is daily at 02:15, with logs under:
 /var/log/local/container-backup
 ```
 
+Before enabling backups on a VM, review the required values in
+`/etc/ciber-container-backup.env`, especially `BACKUP_ROOT`, `RETENTION_DAYS`,
+database passwords, and `CIBER_BACKUP_DATABASES`.
+
 See `docs/backups.md`.
 
 ## Installed Tools
