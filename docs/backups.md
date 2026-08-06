@@ -6,6 +6,39 @@ The script is intentionally simple: it writes backups to the same host under
 `/srv/containers/backup/host`. If long-term retention is required, that folder
 should be copied to external storage by the agreed institutional backup policy.
 
+`scripts/backup-container-host.sh` only runs a backup. It does not install or
+enable cron by itself. Cron is configured separately with
+`scripts/install-backup-cron.sh` after the backup has been tested manually.
+
+## Setup Flow
+
+```mermaid
+flowchart TD
+    A[Clone or update ciber-container-host-setup] --> B[Copy backup env template to /etc]
+    B --> C[Edit /etc/ciber-container-backup.env]
+    C --> D[Run backup dry-run]
+    D --> E{Dry-run looks correct?}
+    E -- No --> C
+    E -- Yes --> F[Run one manual backup]
+    F --> G[Check generated files and logs]
+    G --> H{Backup is valid?}
+    H -- No --> C
+    H -- Yes --> I[Install nightly cron]
+    I --> J[Review cron and logs after first scheduled run]
+```
+
+Operational sequence:
+
+| Stage | Command / Action | Effect |
+|---|---|---|
+| 1 | Copy `templates/env/ciber-container-backup.example.env` to `/etc/ciber-container-backup.env` | Creates the host-local backup config. |
+| 2 | Edit `/etc/ciber-container-backup.env` | Sets paths, retention, database containers, users, and password variables. |
+| 3 | Run `backup-container-host.sh --dry-run` | Prints planned actions without writing backup artifacts. |
+| 4 | Run `backup-container-host.sh` | Creates snapshots, SQL dumps, image archives, and execution logs. |
+| 5 | Inspect backup output and logs | Confirms the backup is usable before scheduling. |
+| 6 | Run `install-backup-cron.sh --apply` | Installs `/etc/cron.d/ciber-container-backup`. |
+| 7 | Check `/var/log/local/container-backup` after the first night | Confirms the scheduled job runs correctly. |
+
 ## What Is Backed Up
 
 | Element | Content | Method / Format | Destination |
