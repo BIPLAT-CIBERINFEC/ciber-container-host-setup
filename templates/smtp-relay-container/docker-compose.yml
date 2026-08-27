@@ -1,0 +1,32 @@
+services:
+  smtp_relay:
+    build: .
+    container_name: ${SMTP_RELAY_CONTAINER_NAME:-ciber-smtp-relay}
+    restart: unless-stopped
+    environment:
+      SMTP_RELAY_HOST: ${SMTP_RELAY_UPSTREAM_HOST:?SMTP_RELAY_UPSTREAM_HOST is required}
+      SMTP_RELAY_PORT: ${SMTP_RELAY_UPSTREAM_PORT:-25}
+      SMTP_RELAY_TLS_SECURITY_LEVEL: ${SMTP_RELAY_TLS_SECURITY_LEVEL:-may}
+      SMTP_RELAY_TLS_CA_FILE: ${SMTP_RELAY_TLS_CA_FILE:-/etc/ssl/certs/ca-certificates.crt}
+      SMTP_RELAY_UPSTREAM_AUTH: ${SMTP_RELAY_UPSTREAM_AUTH:-auto}
+      SMTP_RELAY_UPSTREAM_USER: ${SMTP_RELAY_UPSTREAM_USER:-}
+      SMTP_RELAY_UPSTREAM_PASSWORD: ${SMTP_RELAY_UPSTREAM_PASSWORD:-}
+      SMTP_RELAY_MYHOSTNAME: ${SMTP_RELAY_MYHOSTNAME:-ciber-smtp-relay}
+      SMTP_RELAY_MYORIGIN: ${SMTP_RELAY_MYORIGIN:-localhost}
+      SMTP_RELAY_MYDESTINATION: ${SMTP_RELAY_MYDESTINATION:-localhost}
+      SMTP_RELAY_MYNETWORKS: ${SMTP_RELAY_MYNETWORKS:-127.0.0.0/8 172.16.0.0/12 [::1]/128}
+      SMTP_RELAY_INET_INTERFACES: ${SMTP_RELAY_INET_INTERFACES:-all}
+      SMTP_RELAY_INET_PROTOCOLS: ${SMTP_RELAY_INET_PROTOCOLS:-all}
+    ports:
+      - "${SMTP_RELAY_BIND_HOST:-0.0.0.0}:${SMTP_RELAY_BIND_PORT:-25}:25"
+    healthcheck:
+      test: ["CMD-SHELL", "bash -ec '</dev/tcp/127.0.0.1/25'"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 15s
+    volumes:
+      - smtp_relay_queue:/var/spool/postfix
+
+volumes:
+  smtp_relay_queue:

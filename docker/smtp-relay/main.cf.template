@@ -1,0 +1,29 @@
+compatibility_level = 3.6
+biff = no
+append_dot_mydomain = no
+readme_directory = no
+
+myhostname = ${SMTP_RELAY_MYHOSTNAME}
+myorigin = ${SMTP_RELAY_MYORIGIN}
+mydestination = ${SMTP_RELAY_MYDESTINATION}
+
+inet_interfaces = ${SMTP_RELAY_INET_INTERFACES}
+inet_protocols = ${SMTP_RELAY_INET_PROTOCOLS}
+mynetworks = ${SMTP_RELAY_MYNETWORKS}
+
+relayhost = [${SMTP_RELAY_HOST}]:${SMTP_RELAY_PORT}
+smtp_sasl_auth_enable = ${SMTP_RELAY_SASL_AUTH_ENABLE}
+smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+smtp_sasl_security_options = noanonymous
+smtp_sasl_tls_security_options = noanonymous
+smtp_tls_security_level = ${SMTP_RELAY_TLS_SECURITY_LEVEL}
+smtp_tls_CAfile = ${SMTP_RELAY_TLS_CA_FILE}
+smtp_tls_CApath = /etc/ssl/certs
+smtp_tls_loglevel = 1
+smtp_tls_session_cache_database = btree:${data_directory}/smtp_scache
+
+smtpd_banner = $myhostname ESMTP $mail_name
+smtpd_relay_restrictions = permit_mynetworks reject_unauth_destination
+smtpd_recipient_restrictions = permit_mynetworks reject_unauth_destination
+
+maillog_file = /dev/stdout

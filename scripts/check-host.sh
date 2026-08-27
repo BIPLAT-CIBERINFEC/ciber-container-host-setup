@@ -50,6 +50,18 @@ else
   printf "docker is not installed or not in PATH\n"
 fi
 
+section "SMTP Relay"
+if command -v postconf >/dev/null 2>&1; then
+  printf "\n# host Postfix relay settings\n"
+  postconf -n | grep -E '^(relayhost|inet_interfaces|inet_protocols|mynetworks|smtp_tls_security_level|smtp_sasl_auth_enable) =' || true
+else
+  printf "host Postfix is not installed or postconf is not in PATH\n"
+fi
+if command -v docker >/dev/null 2>&1; then
+  docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" \
+    | grep -E '(^NAMES|smtp.*relay|postfix)' || true
+fi
+
 section "Expected CIBER Directories"
 for path in \
   /opt/container_apps \

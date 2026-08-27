@@ -8,3 +8,4 @@
 - Document standard CIBER container host layout.
 - Document security and operations guidance.
 - Add host tooling inventory and PR template for tooling changes.
+- Add optional SMTP relay setup using host Postfix or a dedicated relay container.

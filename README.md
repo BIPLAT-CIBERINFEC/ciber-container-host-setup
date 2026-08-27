@@ -20,6 +20,7 @@ The host setup covers:
 - containerd root under `/srv/containers/containerd`
 - standard CIBER folders under `/opt`, `/srv`, and `/var/log/local`
 - host-level backup scripts and optional cron scheduling
+- optional host-level SMTP relay setup for application containers
 
 The setup does not publish application services. Network exposure should be
 handled by the relevant application deployment.
@@ -90,6 +91,7 @@ sudo DEPLOY_USER=bioinfoadm \
 | `scripts/bootstrap-debian-container-host.sh` | Install host packages, Docker, storage config, folders, permissions | Only with `--apply` |
 | `scripts/backup-container-host.sh` | Run bind/volume/image/database backups | Yes, unless `--dry-run` |
 | `scripts/install-backup-cron.sh` | Install `/etc/cron.d/ciber-container-backup` | Only with `--apply` |
+| `scripts/setup-smtp-relay.sh` | Configure a host-level SMTP relay using host Postfix or a relay container | Only with `--apply` |
 
 ## Setup Flow
 
@@ -147,6 +149,20 @@ Before enabling backups on a VM, review the required values in
 `CIBER_BACKUP_DATABASES`.
 
 See `docs/backups.md`.
+
+## SMTP Relay
+
+Optional outgoing email relay setup is configured with:
+
+```text
+scripts/setup-smtp-relay.sh
+templates/env/ciber-smtp-relay.example.env
+docs/smtp-relay.md
+```
+
+The relay is installed once at VM level, either as host Postfix or as a small
+Postfix container. Application deployments then only need SMTP client values
+such as `EMAIL_HOST`, `EMAIL_PORT`, `EMAIL_USE_TLS`, and `DEFAULT_FROM_EMAIL`.
 
 ## Installed Tools
 
